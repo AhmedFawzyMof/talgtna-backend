@@ -4,8 +4,7 @@
   "description": "",
   "main": "src/app.js",
   "scripts": {
-    "dev": "nodemon src/app.js",
-    "build": "tailwindcss -i ./public/css/style.css -o ./public/css/main.css --watch"
+    "dev": "nodemon src/app.js"
   },
   "keywords": [],
   "author": "",
