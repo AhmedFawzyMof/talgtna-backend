@@ -2,37 +2,9 @@ const Offers = require("../models/Offers.model");
 const Categories = require("../models/Categories.model");
 const Companies = require("../models/Companies.model");
 const Contacts = require("../models/Contacts.model");
-const Products = require("../models/Products.model");
-const fs = require("fs");
 
 const Home = async (req, res) => {
   try {
-    const products = await new Products({}).allProducts();
-    const images = [];
-    products.forEach((product) => {
-      const imageName = product.image;
-      const productImage = imageName.split("/product/")[1];
-      images.push(productImage);
-    });
-
-    //delete all images that's is not in images array from public/img/product folder
-    fs.readdir("public/img/product", (err, files) => {
-      if (err) {
-        console.error(err);
-      } else {
-        files.forEach((file) => {
-          if (!images.includes(file)) {
-            fs.unlink(`public/img/product/${file}`, (err) => {
-              if (err) {
-                console.error(err);
-              } else {
-                console.log(`Deleted ${file}`);
-              }
-            });
-          }
-        });
-      }
-    });
     const companies = await new Companies({}).getCompanies();
     const offers = await new Offers({}).getAllOffers();
     const categories = await new Categories({}).getCategories();
