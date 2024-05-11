@@ -5,7 +5,7 @@ const app = express();
 const port = process.env.PORT || 3001;
 require("dotenv").config();
 const corsOptions = {
-  origin: "https://talgtna.vercel.app/", // Make sure this matches the request origin exactly
+  origin: "*", // Make sure this matches the request origin exactly
   optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 
