@@ -1,43 +1,54 @@
-const database = require("../config/database");
-const db = database.promise();
+const db = require("../config/database").db;
 
 module.exports = class Categories {
   constructor(category) {
     this.category = category;
   }
 
-  async getCategories() {
-    try {
-      const [categories] = await db.query("SELECT * FROM `Categories`");
-      return categories;
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+  getCategories() {
+    return new Promise((resolve, reject) => {
+      db.all("SELECT * FROM `Categories`", [], (err, rows) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+    });
   }
 
-  async addCategory() {
-    try {
-      await db.query("INSERT INTO `Categories` (`name`) VALUES (?)", [
-        this.category.name,
-      ]);
-
-      return { success: true };
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
-  }
-
-  async editCategory() {
-    try {
-      await db.query(
-        "UPDATE `category` SET  `name_ar` = ? WHERE `category`.`id` = ?",
-        [this.category.name, this.category.id]
+  addCategory() {
+    return new Promise((resolve, reject) => {
+      db.run(
+        "INSERT INTO `Categories` (`name`) VALUES (?)",
+        [this.category.name],
+        function (err) {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve({ success: true, id: this.lastID });
+          }
+        }
       );
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+    });
+  }
+
+  editCategory() {
+    return new Promise((resolve, reject) => {
+      db.run(
+        "UPDATE `Categories` SET `name_ar` = ? WHERE `id` = ?",
+        [this.category.name, this.category.id],
+        function (err) {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve({ success: true, changes: this.changes });
+          }
+        }
+      );
+    });
   }
 };

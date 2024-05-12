@@ -8,6 +8,7 @@ const Home = async (req, res) => {
     const companies = await new Companies({}).getCompanies();
     const offers = await new Offers({}).getAllOffers();
     const categories = await new Categories({}).getCategories();
+
     res.json({
       offers: offers,
       categories: categories,

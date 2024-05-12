@@ -1,37 +1,43 @@
-const database = require("../config/database");
-const db = database.promise();
+const db = require("../config/database").db;
 
-module.exports = class Offers {
+module.exports = class Contact {
   constructor(contact) {
     this.contact = contact;
   }
 
-  async getAllContacts() {
-    try {
-      const [rows] = await db.query("SELECT * FROM `Contact`");
-      return rows;
-    } catch (error) {
-      console.error(error);
-      return error;
-    }
+  getAllContacts() {
+    return new Promise((resolve, reject) => {
+      db.all("SELECT * FROM `Contact`", [], (err, rows) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+    });
   }
 
-  async addContact() {
-    try {
-      await db.query(
-        "INSERT INTO `Contact` (`name`,  `email`,  `phone`, `message`, `seen`) VALUES (?, ?, ?, ?, ?)",
+  addContact() {
+    return new Promise((resolve, reject) => {
+      db.run(
+        "INSERT INTO `Contact` (`name`, `email`, `phone`, `message`, `seen`) VALUES (?, ?, ?, ?, ?)",
         [
           this.contact.name,
           this.contact.email,
           this.contact.phone,
           this.contact.message,
           this.contact.seen,
-        ]
+        ],
+        function (err) {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve({ success: true, id: this.lastID });
+          }
+        }
       );
-      return { success: true };
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+    });
   }
 };

@@ -1,49 +1,59 @@
-const database = require("../config/database");
-const db = database.promise();
+const db = require("../config/database").db;
 
 module.exports = class Offers {
   constructor(offer) {
     this.offer = offer;
   }
 
-  async getAllOffers() {
-    try {
-      const [rows] = await db.query("SELECT * FROM `Offer`");
-      return rows;
-    } catch (error) {
-      console.error(error);
-      return error;
-    }
+  getAllOffers() {
+    return new Promise((resolve, reject) => {
+      db.all("SELECT * FROM `Offer`", [], (err, rows) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+    });
   }
 
-  async addOffer() {
-    try {
-      await db.query(
-        "INSERT INTO `Offer` (`product`,  `image`,  `company`) VALUES (?, ?,?)",
-        [this.offer.product, this.offer.image, this.offer.company]
+  addOffer() {
+    return new Promise((resolve, reject) => {
+      db.run(
+        "INSERT INTO `Offer` (`product`, `image`, `company`) VALUES (?, ?, ?)",
+        [this.offer.product, this.offer.image, this.offer.company],
+        function (err) {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve({ success: true, id: this.lastID });
+          }
+        }
       );
-      return { success: true };
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+    });
   }
 
-  async editOffer() {
-    try {
-      await db.query(
-        "UPDATE `Offer` SET  `image` = ?,  `company` = ?, `product` = ? WHERE `Offer`.`id` = ?",
+  editOffer() {
+    return new Promise((resolve, reject) => {
+      db.run(
+        "UPDATE `Offer` SET `image` = ?, `company` = ?, `product` = ? WHERE `id` = ?",
         [
           this.offer.image,
           this.offer.company,
           this.offer.product,
           this.offer.id,
-        ]
+        ],
+        function (err) {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve({ success: true, changes: this.changes });
+          }
+        }
       );
-      return { success: true };
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+    });
   }
 };

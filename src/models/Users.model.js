@@ -1,5 +1,4 @@
-const database = require("../config/database");
-const db = database.promise();
+const db = require("../config/database").db;
 const { v4: uuidv4 } = require("uuid");
 
 module.exports = class Users {
@@ -7,69 +6,76 @@ module.exports = class Users {
     this.user = user;
   }
 
-  async userCoupons() {
-    try {
-      const [coupons] = await db.query(
+  userCoupons() {
+    return new Promise((resolve, reject) => {
+      db.get(
         "SELECT coupons FROM Users WHERE id = ?",
-        [this.user.id]
+        [this.user.id],
+        (err, row) => {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve(JSON.parse(row.coupons));
+          }
+        }
       );
-      return JSON.parse(coupons[0].coupons);
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+    });
   }
 
-  async getCashBackBlance() {
-    try {
-      const [cashback] = await db.query(
+  getCashBackBalance() {
+    return new Promise((resolve, reject) => {
+      db.get(
         "SELECT cashback FROM Users WHERE id = ?",
-        [this.user.id]
+        [this.user.id],
+        (err, row) => {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve(row);
+          }
+        }
       );
-      return cashback;
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+    });
   }
 
-  async findUser() {
-    try {
-      const [user] = await db.query("SELECT * FROM Users WHERE id = ?", [
-        this.user.id,
-      ]);
-
-      if (user.length == 0) {
-        return { success: false, id: null };
-      }
-
-      return { success: true, id: user[0].id };
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+  findUser() {
+    return new Promise((resolve, reject) => {
+      db.get("SELECT * FROM Users WHERE id = ?", [this.user.id], (err, row) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          resolve(
+            row ? { success: true, id: row.id } : { success: false, id: null }
+          );
+        }
+      });
+    });
   }
 
-  async isRegistered() {
-    try {
-      const [user] = await db.query(
+  isRegistered() {
+    return new Promise((resolve, reject) => {
+      db.get(
         "SELECT * FROM Users WHERE phone = ? OR spare_phone = ?",
-        [this.user.phone, this.user.spare_phone]
+        [this.user.phone, this.user.spare_phone],
+        (err, row) => {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve(
+              row ? { success: true, id: row.id } : { success: false, id: null }
+            );
+          }
+        }
       );
-
-      if (user.length == 0) {
-        return { success: false, id: null };
-      }
-
-      return { success: true, id: user[0].id };
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+    });
   }
 
-  async createUser() {
-    try {
+  createUser() {
+    return new Promise((resolve, reject) => {
       this.user.id = uuidv4();
       this.user.coupons = [
         { code: "13102019", value: 10 },
@@ -77,7 +83,7 @@ module.exports = class Users {
         { code: "دعم فلسطين", value: 0 },
       ];
 
-      db.query(
+      db.run(
         "INSERT INTO `Users` (`id`, `name`, `phone`, `Admin`, `Stuff`, `coupons`, `spare_phone`, `street`, `building`, `floor`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           this.user.id,
@@ -90,91 +96,104 @@ module.exports = class Users {
           this.user.street,
           this.user.building,
           this.user.floor,
-        ]
+        ],
+        function (err) {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve({ success: true, id: this.lastID });
+          }
+        }
       );
-
-      return { success: true, id: this.user.id };
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+    });
   }
 
-  async updateUserAddress() {
-    try {
-      db.query(
-        "UPDATE Users SET `street`=?, `building`=?, `floor`=? WHERE id=?",
-        [this.user.street, this.user.building, this.user.floor, this.user.id]
+  updateUserAddress() {
+    return new Promise((resolve, reject) => {
+      db.run(
+        "UPDATE Users SET `street` = ?, `building` = ?, `floor` = ? WHERE id = ?",
+        [this.user.street, this.user.building, this.user.floor, this.user.id],
+        function (err) {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve({ success: true, changes: this.changes });
+          }
+        }
       );
-
-      return { success: true };
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+    });
   }
 
-  async updateUserCoupons() {
-    try {
-      db.query("UPDATE Users SET `coupons`=? WHERE id=?", [
-        JSON.stringify(this.user.coupons),
-        this.user.id,
-      ]);
-
-      return { success: true };
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+  updateUserCoupons() {
+    return new Promise((resolve, reject) => {
+      db.run(
+        "UPDATE Users SET `coupons` = ? WHERE id = ?",
+        [JSON.stringify(this.user.coupons), this.user.id],
+        function (err) {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve({ success: true, changes: this.changes });
+          }
+        }
+      );
+    });
   }
 
-  async removeUsedCoupon() {
-    try {
+  removeUsedCoupon() {
+    return new Promise(async (resolve, reject) => {
       let coupons;
       try {
         coupons = await this.userCoupons();
       } catch (err) {
         console.error(err);
-        return err;
+        reject(err);
+        return;
       }
 
       const newCoupons = coupons.filter(
-        (coupon) => coupon.code != this.user.coupon.code
+        (coupon) => coupon.code !== this.user.coupon.code
       );
-      db.query("UPDATE Users SET `coupons`=? WHERE id=?", [
-        JSON.stringify(newCoupons),
-        this.user.id,
-      ]);
-      return { success: true };
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+
+      db.run(
+        "UPDATE Users SET `coupons` = ? WHERE id = ?",
+        [JSON.stringify(newCoupons), this.user.id],
+        function (err) {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve({ success: true, changes: this.changes });
+          }
+        }
+      );
+    });
   }
 
-  async verifyCoupons() {
-    try {
-      const [coupons] = await db.query(
+  verifyCoupons() {
+    return new Promise((resolve, reject) => {
+      db.get(
         "SELECT coupons FROM Users WHERE id = ?",
-        [this.user.id]
+        [this.user.id],
+        (err, row) => {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            const coupons = JSON.parse(row.coupons);
+            const coupon = coupons.find(
+              (coupon) => coupon.code === this.user.coupon.code
+            );
+            if (!coupon) {
+              resolve({ success: false });
+            }
+            resolve({ success: true, coupon: coupon });
+          }
+        }
       );
-
-      if (coupons[0].coupons.length == 0) {
-        return { success: false };
-      }
-      const Coupons = JSON.parse(coupons[0].coupons);
-      const coupon = Coupons.find(
-        (coupon) => coupon.code == this.user.coupon.code
-      );
-
-      if (!coupon) {
-        return { success: false };
-      }
-
-      return { success: true, coupon: coupon };
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+    });
   }
 };

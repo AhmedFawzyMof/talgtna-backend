@@ -1,57 +1,71 @@
-const database = require("../config/database");
-const db = database.promise();
+const db = require("../config/database").db;
 
 module.exports = class Companies {
   constructor(company) {
     this.company = company;
   }
 
-  async getCompanies() {
-    try {
-      const [companies] = await db.query("SELECT * FROM `Componies`");
-      return companies;
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+  getCompanies() {
+    return new Promise((resolve, reject) => {
+      db.all("SELECT * FROM `Companies`", [], (err, rows) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+    });
   }
 
-  async addCompany() {
-    try {
-      await db.query(
-        "INSERT INTO `Componies` (`name`, `image`) VALUES (?, ?)",
-        [this.company.name, this.company.image]
+  addCompany() {
+    return new Promise((resolve, reject) => {
+      db.run(
+        "INSERT INTO `Companies` (`name`, `image`) VALUES (?, ?)",
+        [this.company.name, this.company.image],
+        function (err) {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve({ success: true, id: this.lastID });
+          }
+        }
       );
-
-      return { success: true };
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+    });
   }
 
-  async editCompany() {
-    try {
-      await db.query(
-        "UPDATE `Componies` SET `name` = ?, `image` = ? WHERE `Componies`.`id` = ?",
-        [this.company.name, this.company.image, this.company.id]
+  editCompany() {
+    return new Promise((resolve, reject) => {
+      db.run(
+        "UPDATE `Companies` SET `name` = ?, `image` = ? WHERE `id` = ?",
+        [this.company.name, this.company.image, this.company.id],
+        function (err) {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve({ success: true, changes: this.changes });
+          }
+        }
       );
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+    });
   }
 
-  async companyByName() {
-    try {
-      const [companies] = await db.query(
-        "SELECT * FROM `Componies` WHERE name = ?",
-        [this.company.name]
+  companyByName() {
+    return new Promise((resolve, reject) => {
+      db.get(
+        "SELECT * FROM `Companies` WHERE `name` = ?",
+        [this.company.name],
+        (err, row) => {
+          if (err) {
+            console.error(err);
+            reject(err);
+          } else {
+            resolve(row);
+          }
+        }
       );
-      return companies[0];
-    } catch (err) {
-      console.error(err);
-      return err;
-    }
+    });
   }
 };

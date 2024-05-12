@@ -1,11 +1,5 @@
-const mysql = require("mysql2");
+const sqlite3 = require("sqlite3").verbose();
 
-const connection = mysql.createPool({
-  host: process.env.DATABASE_HOST,
-  database: process.env.DATABASE_NAME,
-  password: process.env.DATABASE_PASS,
-  user: process.env.DATABASE_USER,
-  multipleStatements: true,
-});
+const db = new sqlite3.Database(process.env.DATABASE_NAME);
 
-module.exports = connection;
+module.exports = { db };
