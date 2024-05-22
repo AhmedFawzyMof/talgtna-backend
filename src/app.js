@@ -1,6 +1,7 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const path = require("path");
 const app = express();
 const port = process.env.PORT || 3001;
 require("dotenv").config();
@@ -23,11 +24,22 @@ const categoryRoutes = require("./routes/Categories.route");
 const orderRoutes = require("./routes/Orders.route");
 const userRoutes = require("./routes/Users.route");
 
-app.use("/", indexRoutes);
-app.use("/company", companyRoutes);
-app.use("/products", productRoutes);
-app.use("/category", categoryRoutes);
-app.use("/order", orderRoutes);
-app.use("/user", userRoutes);
+app.use("/api", indexRoutes);
+app.use("/api/company", companyRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/category", categoryRoutes);
+app.use("/api/order", orderRoutes);
+app.use("/api/user", userRoutes);
+
+// Redirect all non-API GET requests to React app
+app.get("*", (req, res, next) => {
+  if (!req.path.startsWith("/api")) {
+    res.sendFile(
+      path.resolve(__dirname, "..", "public/frontend", "index.html")
+    );
+  } else {
+    next(); // Continue to the next middleware/route handler
+  }
+});
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));

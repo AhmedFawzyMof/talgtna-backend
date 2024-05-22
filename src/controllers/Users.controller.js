@@ -21,7 +21,7 @@ const AddToFav = async (req, res) => {
       return;
     }
 
-    const addToFav = await new Products({ id: product }).addfavoritePeoducts(
+    const addToFav = await new Products({ id: product }).addFavoriteProducts(
       id
     );
     if (!addToFav.success) {
