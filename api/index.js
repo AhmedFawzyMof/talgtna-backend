@@ -16,7 +16,7 @@ app.set("view engine", "ejs");
 app.use(cookieParser());
 app.use(express.static("public"));
 app.use(cors(corsOptions));
-//Routes
+
 const indexRoutes = require("./routes/Index.route");
 const companyRoutes = require("./routes/Companies.route");
 const productRoutes = require("./routes/Products.route");
@@ -31,15 +31,14 @@ app.use("/api/category", categoryRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/user", userRoutes);
 
-// Redirect all non-API GET requests to React app
 app.get("*", (req, res, next) => {
   if (!req.path.startsWith("/api")) {
     res.sendFile(
       path.resolve(__dirname, "..", "public/frontend", "index.html")
     );
   } else {
-    next(); // Continue to the next middleware/route handler
+    next();
   }
 });
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+module.exports.handler = serverless(app);
